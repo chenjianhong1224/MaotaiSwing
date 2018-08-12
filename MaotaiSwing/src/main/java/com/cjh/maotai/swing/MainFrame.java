@@ -353,7 +353,8 @@ public class MainFrame extends JFrame {
 						for (int i = 1; i < Integer.valueOf(formattedTextField_3.getText()) + 1; i++) {
 							String row[] = { "用户工作任务-" + i, "", "" };
 							dtm.addRow(row);
-							OrderTask task = new OrderTask(beginTime, endTime, auth, skuBean, num, purchaseWay, i + "");
+							OrderTask task = new OrderTask(new Date(beginTime.getTime() + 100 * (i - 2)), endTime, auth,
+									skuBean, num, purchaseWay, i + "");
 							Thread taskThread = new Thread(task, "用户工作任务-" + i);
 							taskThreadList.add(taskThread);
 							taskThread.start();
@@ -389,8 +390,14 @@ public class MainFrame extends JFrame {
 		table = new JTable(dtm);
 		table.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		table.setShowGrid(false);
-		table.getColumnModel().getColumn(0).setPreferredWidth(80);
-		table.getColumnModel().getColumn(1).setPreferredWidth(80);
+		table.getColumnModel().getColumn(0).setPreferredWidth(120);
+		table.getColumnModel().getColumn(0).setMaxWidth(160);
+		table.getColumnModel().getColumn(0).sizeWidthToFit();
+		table.getColumnModel().getColumn(1).setPreferredWidth(120);
+		table.getColumnModel().getColumn(1).setMaxWidth(160);
+		table.getColumnModel().getColumn(1).sizeWidthToFit();
+		table.getColumnModel().getColumn(2).sizeWidthToFit();
+
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		panel_3.add(table.getTableHeader(), BorderLayout.NORTH);
 		panel_3.add(table, BorderLayout.CENTER);
