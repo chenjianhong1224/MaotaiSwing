@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.cjh.maotai.swing</groupId>
@@ -36,18 +37,15 @@
 			<version>4.5.5</version>
 		</dependency>
 	</dependencies>
+	<!-- <build> <plugins> <plugin> <artifactId>maven-jar-plugin</artifactId> 
+		<configuration> <archive> <manifest> <mainClass>com.cjh.maotai.swing.MainFrame</mainClass> 
+		</manifest> </archive> </configuration> </plugin> </plugins> </build> -->
 
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>com.cjh.maotai.swing.MainFrame</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>

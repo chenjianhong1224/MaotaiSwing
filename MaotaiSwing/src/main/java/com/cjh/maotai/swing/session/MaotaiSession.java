@@ -18,6 +18,26 @@ public class MaotaiSession {
 
 	private static Map<String, CookieStore> sessionMap = Maps.newHashMap();
 
+	private static String addressId;
+
+	private static String address;
+
+	public static String getAddressId() {
+		return addressId;
+	}
+
+	public void setAddressId(String addressId) {
+		this.addressId = addressId;
+	}
+
+	public static String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
 	public void setSession(String userName, CookieStore cookieStore) {
 		synchronized (this.getClass()) {
 			sessionMap.put(userName, cookieStore);
