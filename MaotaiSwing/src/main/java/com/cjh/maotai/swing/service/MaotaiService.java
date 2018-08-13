@@ -10,4 +10,6 @@ public interface MaotaiService {
 	public ReturnResultBean logout(String userName);
 	
 	public ReturnResultBean order(String auth, MaotaiSkuBean skuBean, String num, String purchaseWay);
+	
+	public ReturnResultBean getPrice(String url, String userName);
 }

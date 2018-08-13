@@ -37,6 +37,7 @@ import javax.swing.JTextPane;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -168,6 +169,7 @@ public class MainFrame extends JFrame {
 									+ MaotaiSession.getAddress());
 							textField_1.setText("auth=" + MaotaiSession.getValidAuth(userNameField.getText()));
 							btnNewButton.setText("退出登录");
+							textField.requestFocus();
 						}
 					}
 				} else {
@@ -189,6 +191,10 @@ public class MainFrame extends JFrame {
 		contentPane.add(panel_2);
 		panel_2.setLayout(null);
 
+		JLabel lblNewLabel_5 = new JLabel("");
+		lblNewLabel_5.setBounds(646, 105, 110, 18);
+		panel_2.add(lblNewLabel_5);
+
 		JLabel lblNewLabel_2 = new JLabel("购买商品的url地址");
 		lblNewLabel_2.setBounds(14, 16, 201, 18);
 		panel_2.add(lblNewLabel_2);
@@ -204,6 +210,16 @@ public class MainFrame extends JFrame {
 				if (resultBean.getResultCode() != 0) {
 					JOptionPane.showMessageDialog(panel_2, resultBean.getReturnMsg());
 					textField.requestFocus();
+				}
+				MaotaiService maotaiService = (MaotaiService) SpringContextUtils.getContext()
+						.getBean("maotaiServiceImpl");
+				try {
+					ReturnResultBean priceResultBean = maotaiService.getPrice(url, userNameField.getText());
+					if (priceResultBean.getResultCode() == 0) {
+						lblNewLabel_5.setText("销售价：" + ((Double) priceResultBean.getReturnObj()));
+					}
+				} catch (Exception e1) {
+					e1.printStackTrace();
 				}
 			}
 		});
@@ -269,10 +285,6 @@ public class MainFrame extends JFrame {
 		formattedTextField_3.setValue(3);
 		panel_2.add(formattedTextField_3);
 		// -------------
-
-		JLabel lblNewLabel_5 = new JLabel("单价：1499.00");
-		lblNewLabel_5.setBounds(646, 105, 110, 18);
-		panel_2.add(lblNewLabel_5);
 
 		JButton btnNewButton_1 = new JButton("开始执行");
 		btnNewButton_1.addMouseListener(new MouseAdapter() {
@@ -343,6 +355,13 @@ public class MainFrame extends JFrame {
 							return;
 						}
 						MaotaiSkuBean skuBean = (MaotaiSkuBean) (resultBean.getReturnObj());
+						MaotaiService maotaiService = (MaotaiService) SpringContextUtils.getContext()
+								.getBean("maotaiServiceImpl");
+						ReturnResultBean priceResultBean = maotaiService.getPrice(url, userNameField.getText());
+						if (priceResultBean.getResultCode() == 0) {
+							DecimalFormat df = new DecimalFormat("#.00");
+							skuBean.setSellPrice(df.format(((Double) priceResultBean.getReturnObj())));
+						}
 						OrderTask defaultTask = new OrderTask(new Date(beginTime.getTime() - 1000 * 5), endTime, auth,
 								skuBean, num, purchaseWay, "0");
 						defaultTaskThread = new Thread(defaultTask, "系统默认任务-0");

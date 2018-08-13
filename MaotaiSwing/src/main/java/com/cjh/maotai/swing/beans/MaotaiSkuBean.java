@@ -6,6 +6,7 @@ public class MaotaiSkuBean implements Serializable{
 	 private String skuId;
 	 private String itemId;
 	 private String shopId;
+	 private String sellPrice;
 	public String getSkuId() {
 		return skuId;
 	}
@@ -23,5 +24,11 @@ public class MaotaiSkuBean implements Serializable{
 	}
 	public void setShopId(String shopId) {
 		this.shopId = shopId;
+	}
+	public String getSellPrice() {
+		return sellPrice;
+	}
+	public void setSellPrice(String sellPrice) {
+		this.sellPrice = sellPrice;
 	}
 }
