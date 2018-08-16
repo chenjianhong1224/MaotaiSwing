@@ -17,6 +17,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.util.StringUtils;
 
+import com.cjh.maotai.swing.config.ProxyConfig;
 import com.cjh.maotai.swing.beans.MaotaiSkuBean;
 import com.cjh.maotai.swing.beans.ReturnResultBean;
 import com.cjh.maotai.swing.beans.ViewMsgBean;
@@ -25,6 +26,7 @@ import com.cjh.maotai.swing.service.MaotaiService;
 import com.cjh.maotai.swing.session.MaotaiSession;
 import com.cjh.maotai.swing.task.OrderTask;
 import com.cjh.maotai.swing.task.ViewTask;
+import com.cjh.maotai.swing.utils.CheckUtil;
 import com.cjh.maotai.swing.utils.MaotaiUrlParseUtil;
 import com.cjh.maotai.swing.utils.SSLTrustUtil;
 import com.google.common.collect.Lists;
@@ -72,11 +74,15 @@ public class MainFrame extends JFrame {
 	public static LinkedBlockingQueue<ViewMsgBean> msgQueue = new LinkedBlockingQueue<ViewMsgBean>();
 	private DefaultTableModel dtm = null;
 	private Thread defaultTaskThread = null;
-	private JTextArea textField_1;
+	private JTextArea textArea_1;
+	private JTextArea textArea;
+	private JCheckBox chckbxNewCheckBox_1;
+	private int clickProxyAreaCount = 0;
 
 	/**
 	 * Launch the application.
-	 * @throws Exception 
+	 * 
+	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
 		SpringApplication.run(MainFrame.class, args);
@@ -169,7 +175,7 @@ public class MainFrame extends JFrame {
 							textPane.setVisible(true);
 							textPane.setText("您已成功登录，用户名为：" + userNameField.getText() + "， " + "收货地址为："
 									+ MaotaiSession.getAddress());
-							textField_1.setText("auth=" + MaotaiSession.getValidAuth(userNameField.getText()));
+							textArea_1.setText("auth=" + MaotaiSession.getValidAuth(userNameField.getText()));
 							btnNewButton.setText("退出登录");
 							textField.requestFocus();
 						}
@@ -180,7 +186,7 @@ public class MainFrame extends JFrame {
 					textPane.setVisible(false);
 					JOptionPane.showMessageDialog(panel, resultBean.getReturnMsg());
 					btnNewButton.setText("确认登录");
-					textField_1.setText("");
+					textArea_1.setText("");
 				}
 			}
 		});
@@ -333,6 +339,8 @@ public class MainFrame extends JFrame {
 					formattedTextField_4.setEditable(true);
 					chckbxNewCheckBox.setEnabled(true);
 					btnNewButton.setEnabled(true);
+					textArea.setEditable(true);
+					chckbxNewCheckBox_1.setEnabled(true);
 					taskThreadList.clear();
 					int rowCount = table.getRowCount();
 					while (rowCount > 0) {
@@ -342,6 +350,28 @@ public class MainFrame extends JFrame {
 					table.validate();
 				} else {
 					if (MaotaiSession.isLogined()) {
+						if (chckbxNewCheckBox_1.isSelected()) {
+							if (StringUtils.isEmpty(textArea.getText())) {
+								JOptionPane.showMessageDialog(panel_2, "代理服务器地址不能为空");
+								return;
+							}
+							String[] addresses = textArea.getText().split(",");
+							if (addresses.length < 0) {
+								JOptionPane.showMessageDialog(panel_2, "代理服务器地址配置不正确，注意：多个地址以逗号分割");
+								return;
+							}
+							List<String> address = Lists.newArrayList(addresses);
+							for (String adrs : address) {
+								if (!CheckUtil.checkProxy(adrs)) {
+									JOptionPane.showMessageDialog(panel_2, "代理服务器" + adrs + "不可用，注意：多个地址以逗号分割");
+									return;
+								}
+							}
+							ProxyConfig.getInstance().setAddress(address);
+							ProxyConfig.getInstance().setUseFlag(true);
+						} else {
+							ProxyConfig.getInstance().setUseFlag(false);
+						}
 						OrderTask.getTaskFinishFlag().set(false);
 						Date beginTime = (Date) formattedTextField.getValue();
 						Date endTime = (Date) formattedTextField_1.getValue();
@@ -391,6 +421,8 @@ public class MainFrame extends JFrame {
 						formattedTextField_4.setEditable(false);
 						chckbxNewCheckBox.setEnabled(false);
 						btnNewButton.setEnabled(false);
+						textArea.setEditable(false);
+						chckbxNewCheckBox_1.setEnabled(false);
 					} else {
 						JOptionPane.showMessageDialog(panel_2, "请登录");
 					}
@@ -422,11 +454,42 @@ public class MainFrame extends JFrame {
 		panel_3.add(table.getTableHeader(), BorderLayout.NORTH);
 		panel_3.add(table, BorderLayout.CENTER);
 
-		textField_1 = new JTextArea();
-		textField_1.setEditable(false);
-		textField_1.setBounds(10, 473, 1158, 49);
-		textField_1.setLineWrap(true); // 激活自动换行功能
-		textField_1.setWrapStyleWord(true);
-		contentPane.add(textField_1);
+		textArea_1 = new JTextArea();
+		textArea_1.setEditable(false);
+		textArea_1.setBounds(10, 473, 763, 49);
+		textArea_1.setLineWrap(true); // 激活自动换行功能
+		textArea_1.setWrapStyleWord(true);
+		textArea_1.setVisible(false);
+		contentPane.add(textArea_1);
+
+		chckbxNewCheckBox_1 = new JCheckBox("使用代理");
+		chckbxNewCheckBox_1.setBounds(1079, 489, 89, 27);
+		chckbxNewCheckBox_1.setVisible(false);
+		chckbxNewCheckBox_1.setSelected(false);
+		contentPane.add(chckbxNewCheckBox_1);
+
+		JPanel panel_4 = new JPanel();
+		panel_4.setBounds(818, 473, 251, 49);
+		contentPane.add(panel_4);
+		panel_4.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				clickProxyAreaCount++;
+				if (clickProxyAreaCount > 5) {
+					textArea.setVisible(true);
+					chckbxNewCheckBox_1.setVisible(true);
+					panel_4.setVisible(false);
+					textArea_1.setVisible(true);
+				}
+			}
+		});
+
+		textArea = new JTextArea();
+		textArea.setText("139.199.89.119");
+		textArea.setBounds(818, 473, 251, 49);
+		contentPane.add(textArea);
+		textArea.setLineWrap(true); // 激活自动换行功能
+		textArea.setWrapStyleWord(true);
+		textArea.setVisible(false);
 	}
 }
