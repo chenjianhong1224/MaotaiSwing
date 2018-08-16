@@ -30,6 +30,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClients;
@@ -53,6 +54,7 @@ import com.cjh.maotai.swing.beans.ReturnResultBean;
 import com.cjh.maotai.swing.service.MaotaiService;
 import com.cjh.maotai.swing.session.MaotaiSession;
 import com.cjh.maotai.swing.utils.MaotaiUrlParseUtil;
+import com.cjh.maotai.swing.utils.SSLTrustUtil;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 
@@ -82,8 +84,9 @@ public class MaotaiServiceImpl implements MaotaiService {
 		headerList.add(new BasicHeader(HttpHeaders.USER_AGENT, userAgent));
 		// 构造自定义的HttpClient对象
 		CookieStore cookieStore = new BasicCookieStore();
-		HttpClient httpClient = HttpClients.custom().setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore)
-				.build();
+		HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
+		HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
+				.setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore).build();
 		String url = "https://www.emaotai.cn/smartsales-b2c-web-pc/login";
 		URI uri = null;
 		uri = new URIBuilder(url).build();
@@ -137,9 +140,9 @@ public class MaotaiServiceImpl implements MaotaiService {
 			headerList.add(new BasicHeader("Timestamp", now.getTime() + ""));
 			headerList.add(new BasicHeader("Sign", DigestUtils.md5Hex(now.getTime() + "")));
 			// 构造自定义的HttpClient对象
-
-			HttpClient httpClient = HttpClients.custom().setDefaultHeaders(headerList)
-					.setDefaultCookieStore(cookieStore).build();
+			HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
+			HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
+					.setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore).build();
 			String url = "https://www.emaotai.cn/huieryun-identity/api/v1/auth/XIANGLONG/user/b2cmember/auth?appCode=1&_t="
 					+ now.getTime();
 			URI uri = null;
@@ -218,7 +221,9 @@ public class MaotaiServiceImpl implements MaotaiService {
 		headerList.add(new BasicHeader("terminalType", "a1"));
 		headerList.add(new BasicHeader("Timestamp", now.getTime() + ""));
 		headerList.add(new BasicHeader(HttpHeaders.USER_AGENT, userAgent));
-		HttpClient httpClient = HttpClients.custom().setDefaultHeaders(headerList).build();
+		HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
+		HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
+				.setDefaultHeaders(headerList).build();
 		String url = "https://i.emaotai.cn/yundt-application-trade-core/api/v1/yundt/trade/member/address/list?appCode=1&_t="
 				+ now.getTime();
 		URI uri = null;
@@ -312,7 +317,9 @@ public class MaotaiServiceImpl implements MaotaiService {
 		headerList.add(new BasicHeader("terminalType", "a1"));
 		headerList.add(new BasicHeader("Timestamp", now.getTime() + ""));
 		headerList.add(new BasicHeader(HttpHeaders.USER_AGENT, userAgent));
-		HttpClient httpClient = HttpClients.custom().setDefaultHeaders(headerList).build();
+		HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
+		HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
+				.setDefaultHeaders(headerList).build();
 		String url = "https://i.emaotai.cn/yundt-application-trade-core/api/v1/yundt/trade/order/submit?appCode=1&_t="
 				+ now.getTime();
 		URI uri = null;
@@ -387,8 +394,9 @@ public class MaotaiServiceImpl implements MaotaiService {
 		// 构造自定义的HttpClient对象
 
 		CookieStore cookieStore = MaotaiSession.getSession(userName);
-		HttpClient httpClient = HttpClients.custom().setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore)
-				.build();
+		HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
+		HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
+				.setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore).build();
 		MaotaiSkuBean skuBean = (MaotaiSkuBean) parseResult.getReturnObj();
 		String requestUrl = "https://i.emaotai.cn/yundt-application-trade-core/api/v1/yundt/trade/item/sku/get?shopId="
 				+ skuBean.getShopId() + "&itemId=" + skuBean.getItemId() + "&skuId=" + skuBean.getSkuId()

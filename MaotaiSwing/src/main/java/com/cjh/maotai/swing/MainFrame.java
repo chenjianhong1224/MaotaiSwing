@@ -26,6 +26,7 @@ import com.cjh.maotai.swing.session.MaotaiSession;
 import com.cjh.maotai.swing.task.OrderTask;
 import com.cjh.maotai.swing.task.ViewTask;
 import com.cjh.maotai.swing.utils.MaotaiUrlParseUtil;
+import com.cjh.maotai.swing.utils.SSLTrustUtil;
 import com.google.common.collect.Lists;
 
 import java.awt.Color;
@@ -75,8 +76,9 @@ public class MainFrame extends JFrame {
 
 	/**
 	 * Launch the application.
+	 * @throws Exception 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		SpringApplication.run(MainFrame.class, args);
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -282,7 +284,7 @@ public class MainFrame extends JFrame {
 		JFormattedTextField formattedTextField_3 = new JFormattedTextField(nf);
 		formattedTextField_3.setEditable(false);
 		formattedTextField_3.setBounds(697, 56, 56, 24);
-		formattedTextField_3.setValue(3);
+		formattedTextField_3.setValue(5);
 		panel_2.add(formattedTextField_3);
 		// -------------
 
@@ -328,7 +330,6 @@ public class MainFrame extends JFrame {
 					textField.setEditable(true);
 					formattedTextField.setEditable(true);
 					formattedTextField_1.setEditable(true);
-					formattedTextField_3.setEditable(true);
 					formattedTextField_4.setEditable(true);
 					chckbxNewCheckBox.setEnabled(true);
 					btnNewButton.setEnabled(true);
@@ -362,7 +363,7 @@ public class MainFrame extends JFrame {
 							DecimalFormat df = new DecimalFormat("#.00");
 							skuBean.setSellPrice(df.format(((Double) priceResultBean.getReturnObj())));
 						}
-						OrderTask defaultTask = new OrderTask(new Date(beginTime.getTime() - 1000 * 5), endTime, auth,
+						OrderTask defaultTask = new OrderTask(new Date(beginTime.getTime() - 1000 * 1), endTime, auth,
 								skuBean, num, purchaseWay, "0");
 						defaultTaskThread = new Thread(defaultTask, "系统默认任务-0");
 						String row1[] = { "系统默认任务-0", "", "" };
