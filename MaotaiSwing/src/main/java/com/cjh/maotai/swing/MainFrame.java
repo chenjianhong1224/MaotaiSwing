@@ -290,7 +290,7 @@ public class MainFrame extends JFrame {
 		JFormattedTextField formattedTextField_3 = new JFormattedTextField(nf);
 		formattedTextField_3.setEditable(false);
 		formattedTextField_3.setBounds(697, 56, 56, 24);
-		formattedTextField_3.setValue(5);
+		formattedTextField_3.setValue(3);
 		panel_2.add(formattedTextField_3);
 		// -------------
 
@@ -393,7 +393,7 @@ public class MainFrame extends JFrame {
 							DecimalFormat df = new DecimalFormat("#.00");
 							skuBean.setSellPrice(df.format(((Double) priceResultBean.getReturnObj())));
 						}
-						OrderTask defaultTask = new OrderTask(new Date(beginTime.getTime() - 1000 * 1), endTime, auth,
+						OrderTask defaultTask = new OrderTask(new Date(beginTime.getTime() - 500 * 1), endTime, auth,
 								skuBean, num, purchaseWay, "0");
 						defaultTaskThread = new Thread(defaultTask, "系统默认任务-0");
 						String row1[] = { "系统默认任务-0", "", "" };

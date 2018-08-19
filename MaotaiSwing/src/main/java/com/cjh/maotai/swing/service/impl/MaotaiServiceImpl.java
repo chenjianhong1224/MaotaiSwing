@@ -51,6 +51,7 @@ import com.cjh.maotai.swing.beans.MaotaiOrderItem;
 import com.cjh.maotai.swing.beans.MaotaiOrderSend;
 import com.cjh.maotai.swing.beans.MaotaiSkuBean;
 import com.cjh.maotai.swing.beans.ReturnResultBean;
+import com.cjh.maotai.swing.config.ProxyConfig;
 import com.cjh.maotai.swing.service.MaotaiService;
 import com.cjh.maotai.swing.session.MaotaiSession;
 import com.cjh.maotai.swing.utils.MaotaiUrlParseUtil;
@@ -72,6 +73,22 @@ public class MaotaiServiceImpl implements MaotaiService {
 	@Autowired
 	private MaotaiSession maotaiSession;
 
+	private String getWwwEmaotaiUrl() {
+		if (ProxyConfig.getInstance().isUseFlag()) {
+			return ProxyConfig.getInstance().getAddress().get(0);
+		} else {
+			return "www.emaotai.cn";
+		}
+	}
+
+	private String getIEmaotaiUrl() {
+		if (ProxyConfig.getInstance().isUseFlag()) {
+			return ProxyConfig.getInstance().getAddress().get(0);
+		} else {
+			return "i.emaotai.cn";
+		}
+	}
+
 	private CookieStore getInitCookie() throws URISyntaxException, ClientProtocolException, IOException {
 		List<Header> headerList = Lists.newArrayList();
 		headerList.add(
@@ -87,7 +104,7 @@ public class MaotaiServiceImpl implements MaotaiService {
 		HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
 		HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
 				.setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore).build();
-		String url = "https://www.emaotai.cn/smartsales-b2c-web-pc/login";
+		String url = "https://" + getWwwEmaotaiUrl() + "/smartsales-b2c-web-pc/login";
 		URI uri = null;
 		uri = new URIBuilder(url).build();
 		HttpUriRequest httpUriRequest = RequestBuilder.get().setUri(uri).build();
@@ -143,8 +160,8 @@ public class MaotaiServiceImpl implements MaotaiService {
 			HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
 			HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
 					.setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore).build();
-			String url = "https://www.emaotai.cn/huieryun-identity/api/v1/auth/XIANGLONG/user/b2cmember/auth?appCode=1&_t="
-					+ now.getTime();
+			String url = "https://" + getWwwEmaotaiUrl()
+					+ "/huieryun-identity/api/v1/auth/XIANGLONG/user/b2cmember/auth?appCode=1&_t=" + now.getTime();
 			URI uri = null;
 			try {
 				uri = new URIBuilder(url).build();
@@ -224,8 +241,8 @@ public class MaotaiServiceImpl implements MaotaiService {
 		HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
 		HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
 				.setDefaultHeaders(headerList).build();
-		String url = "https://i.emaotai.cn/yundt-application-trade-core/api/v1/yundt/trade/member/address/list?appCode=1&_t="
-				+ now.getTime();
+		String url = "https://" + getIEmaotaiUrl()
+				+ "/yundt-application-trade-core/api/v1/yundt/trade/member/address/list?appCode=1&_t=" + now.getTime();
 		URI uri = null;
 		try {
 			uri = new URIBuilder(url).build();
@@ -320,8 +337,8 @@ public class MaotaiServiceImpl implements MaotaiService {
 		HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
 		HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
 				.setDefaultHeaders(headerList).build();
-		String url = "https://i.emaotai.cn/yundt-application-trade-core/api/v1/yundt/trade/order/submit?appCode=1&_t="
-				+ now.getTime();
+		String url = "https://" + getIEmaotaiUrl()
+				+ "/yundt-application-trade-core/api/v1/yundt/trade/order/submit?appCode=1&_t=" + now.getTime();
 		URI uri = null;
 		try {
 			uri = new URIBuilder(url).build();
@@ -398,7 +415,7 @@ public class MaotaiServiceImpl implements MaotaiService {
 		HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
 				.setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore).build();
 		MaotaiSkuBean skuBean = (MaotaiSkuBean) parseResult.getReturnObj();
-		String requestUrl = "https://i.emaotai.cn/yundt-application-trade-core/api/v1/yundt/trade/item/sku/get?shopId="
+		String requestUrl = "https://"+getIEmaotaiUrl()+"/yundt-application-trade-core/api/v1/yundt/trade/item/sku/get?shopId="
 				+ skuBean.getShopId() + "&itemId=" + skuBean.getItemId() + "&skuId=" + skuBean.getSkuId()
 				+ "&appCode=1&_t=" + now.getTime();
 		URI uri = null;
