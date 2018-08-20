@@ -393,7 +393,7 @@ public class MainFrame extends JFrame {
 							DecimalFormat df = new DecimalFormat("#.00");
 							skuBean.setSellPrice(df.format(((Double) priceResultBean.getReturnObj())));
 						}
-						OrderTask defaultTask = new OrderTask(new Date(beginTime.getTime() - 500 * 1), endTime, auth,
+						OrderTask defaultTask = new OrderTask(new Date(beginTime.getTime() - 200 * 1), endTime, auth,
 								skuBean, num, purchaseWay, "0");
 						defaultTaskThread = new Thread(defaultTask, "系统默认任务-0");
 						String row1[] = { "系统默认任务-0", "", "" };
