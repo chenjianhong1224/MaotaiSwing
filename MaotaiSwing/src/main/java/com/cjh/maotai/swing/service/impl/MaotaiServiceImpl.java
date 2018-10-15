@@ -41,6 +41,7 @@ import org.apache.logging.log4j.message.StringFormattedMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
+import org.springframework.util.StringUtils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -62,13 +63,15 @@ import com.google.common.io.Resources;
 @Service
 public class MaotaiServiceImpl implements MaotaiService {
 
-	private final String userAgent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0";
+	public static final String userAgent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0";
 
-	private final String acceptEncoding = "gzip, deflate, br";
+	public static final String acceptEncoding = "gzip, deflate, br";
 
-	private final String acceptLanguage = "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2";
+	public static final String acceptLanguage = "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2";
 
-	private final String connection = "keep-alive";
+	public static final String connection = "keep-alive";
+
+	public static final String faceVeriFyUrl = "https://www.cmaotai.com/index.html?faceverify=";
 
 	@Autowired
 	private MaotaiSession maotaiSession;
@@ -111,7 +114,6 @@ public class MaotaiServiceImpl implements MaotaiService {
 		HttpClientContext httpClientContext = HttpClientContext.create();
 		HttpResponse response = httpClient.execute(httpUriRequest, httpClientContext);
 		if (response.getStatusLine().getStatusCode() == 200) {
-			List<Cookie> cookies = cookieStore.getCookies();
 			return cookieStore;
 		} else {
 			return null;
@@ -128,86 +130,103 @@ public class MaotaiServiceImpl implements MaotaiService {
 	}
 
 	@Override
-	public ReturnResultBean login(String userName, String password) {
+	public ReturnResultBean login(String userName, String password, String auths) {
 		ReturnResultBean resultBean = new ReturnResultBean();
 		resultBean.setResultCode(-1);
 		resultBean.setReturnMsg("登录失败");
-		CookieStore cookieStore = null;
-		try {
-			cookieStore = getInitCookie();
-		} catch (Exception e) {
-			resultBean.setReturnMsg("登录失败" + e.getMessage());
-			return resultBean;
-		}
-		if (cookieStore != null) {
-			List<Header> headerList = Lists.newArrayList();
-			headerList.add(new BasicHeader(HttpHeaders.ACCEPT, "application/json, text/javascript, */*; q=0.01"));
-			headerList.add(new BasicHeader(HttpHeaders.ACCEPT_ENCODING, acceptEncoding));
-			headerList.add(new BasicHeader(HttpHeaders.ACCEPT_LANGUAGE, acceptLanguage));
-			headerList.add(new BasicHeader(HttpHeaders.CONNECTION, connection));
-			headerList.add(new BasicHeader("appId", "1"));
-			headerList.add(new BasicHeader("channelCode", "01"));
-			headerList.add(new BasicHeader("channelId", "01"));
-			headerList.add(new BasicHeader("Flag", "1"));
-			headerList.add(new BasicHeader(HttpHeaders.HOST, "www.emaotai.cn"));
-			headerList.add(new BasicHeader(HttpHeaders.REFERER, "https://www.emaotai.cn/smartsales-b2c-web-pc/login"));
-			headerList.add(new BasicHeader(HttpHeaders.USER_AGENT, userAgent));
-			headerList.add(new BasicHeader("tenantId", "1"));
-			Date now = new Date();
-			headerList.add(new BasicHeader("Timestamp", now.getTime() + ""));
-			headerList.add(new BasicHeader("Sign", DigestUtils.md5Hex(now.getTime() + "")));
-			// 构造自定义的HttpClient对象
-			HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
-			HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
-					.setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore).build();
-			String url = "https://" + getWwwEmaotaiUrl()
-					+ "/huieryun-identity/api/v1/auth/XIANGLONG/user/b2cmember/auth?appCode=1&_t=" + now.getTime();
-			URI uri = null;
+		if (StringUtils.isEmpty(auths)) {
+			CookieStore cookieStore = null;
 			try {
-				uri = new URIBuilder(url).build();
-			} catch (URISyntaxException e) {
+				cookieStore = getInitCookie();
+			} catch (Exception e) {
 				resultBean.setReturnMsg("登录失败" + e.getMessage());
 				return resultBean;
 			}
-			List<NameValuePair> params = Lists.newArrayList();
-			params.add(new BasicNameValuePair("loginFlag", "1"));
-			params.add(new BasicNameValuePair("loginSource", "2"));
-			params.add(new BasicNameValuePair("loginType", "name"));
-			params.add(new BasicNameValuePair("userCode", userName));
-			try {
-				params.add(new BasicNameValuePair("userPassword", getEncryptStr(password)));
-				HttpUriRequest httpUriRequest;
-				httpUriRequest = RequestBuilder.post().setEntity(new UrlEncodedFormEntity(params, "UTF-8")).setUri(uri)
-						.build();
-				HttpClientContext httpClientContext = HttpClientContext.create();
-				HttpResponse response = httpClient.execute(httpUriRequest, httpClientContext);
-				if (response.getStatusLine().getStatusCode() == 200) {
-					HttpEntity entity = response.getEntity();
-					if (entity != null) {
-						String content = EntityUtils.toString(entity);
-						JSONObject jsonObject = JSON.parseObject(content);
-						Integer resultCode = jsonObject.getInteger("resultCode");
-						if (resultCode != null && resultCode == 0) {
-							resultBean.setResultCode(0);
-							resultBean.setReturnObj(cookieStore);
-							maotaiSession.setSession(userName, cookieStore);
-							String auth = maotaiSession.getValidAuth(userName);
-							ReturnResultBean addrResBean = getAddress(auth);
-							if (addrResBean.getResultCode() == 0) {
-								String[] tmp = ((String) addrResBean.getReturnObj()).split("\\|");
-								maotaiSession.setAddress(tmp[1]);
-								maotaiSession.setAddressId(tmp[0]);
-								return resultBean;
-							} else {
-								maotaiSession.removeSession(userName);
-								return addrResBean;
+			if (cookieStore != null) {
+				List<Header> headerList = Lists.newArrayList();
+				headerList.add(new BasicHeader(HttpHeaders.ACCEPT, "application/json, text/javascript, */*; q=0.01"));
+				headerList.add(new BasicHeader(HttpHeaders.ACCEPT_ENCODING, acceptEncoding));
+				headerList.add(new BasicHeader(HttpHeaders.ACCEPT_LANGUAGE, acceptLanguage));
+				headerList.add(new BasicHeader(HttpHeaders.CONNECTION, connection));
+				headerList.add(new BasicHeader("appId", "1"));
+				headerList.add(new BasicHeader("channelCode", "01"));
+				headerList.add(new BasicHeader("channelId", "01"));
+				headerList.add(new BasicHeader("Flag", "1"));
+				headerList.add(new BasicHeader(HttpHeaders.HOST, "www.emaotai.cn"));
+				headerList.add(
+						new BasicHeader(HttpHeaders.REFERER, "https://www.emaotai.cn/smartsales-b2c-web-pc/login"));
+				headerList.add(new BasicHeader(HttpHeaders.USER_AGENT, userAgent));
+				headerList.add(new BasicHeader("tenantId", "1"));
+				Date now = new Date();
+				headerList.add(new BasicHeader("Timestamp", now.getTime() + ""));
+				headerList.add(new BasicHeader("Sign", DigestUtils.md5Hex(now.getTime() + "")));
+				// 构造自定义的HttpClient对象
+				HttpClientConnectionManager clientConnectionManager = SSLTrustUtil.init();
+				HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
+						.setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore).build();
+				String url = "https://" + getWwwEmaotaiUrl()
+						+ "/huieryun-identity/api/v1/auth/XIANGLONG/user/b2cmember/auth?appCode=1&_t=" + now.getTime();
+				URI uri = null;
+				try {
+					uri = new URIBuilder(url).build();
+				} catch (URISyntaxException e) {
+					resultBean.setReturnMsg("登录失败" + e.getMessage());
+					return resultBean;
+				}
+				List<NameValuePair> params = Lists.newArrayList();
+				params.add(new BasicNameValuePair("loginFlag", "1"));
+				params.add(new BasicNameValuePair("loginSource", "2"));
+				params.add(new BasicNameValuePair("loginType", "name"));
+				params.add(new BasicNameValuePair("userCode", userName));
+				try {
+					params.add(new BasicNameValuePair("userPassword", getEncryptStr(password)));
+					HttpUriRequest httpUriRequest;
+					httpUriRequest = RequestBuilder.post().setEntity(new UrlEncodedFormEntity(params, "UTF-8"))
+							.setUri(uri).build();
+					HttpClientContext httpClientContext = HttpClientContext.create();
+					HttpResponse response = httpClient.execute(httpUriRequest, httpClientContext);
+					if (response.getStatusLine().getStatusCode() == 200) {
+						HttpEntity entity = response.getEntity();
+						if (entity != null) {
+							String content = EntityUtils.toString(entity);
+							JSONObject jsonObject = JSON.parseObject(content);
+							Integer resultCode = jsonObject.getInteger("resultCode");
+							if (resultCode != null && resultCode == 0) {
+								resultBean.setResultCode(0);
+								resultBean.setReturnObj(cookieStore);
+								maotaiSession.setSession(userName, cookieStore);
+								String auth = maotaiSession.getValidAuth(userName);
+								ReturnResultBean addrResBean = getAddress(auth);
+								if (addrResBean.getResultCode() == 0) {
+									String[] tmp = ((String) addrResBean.getReturnObj()).split("\\|");
+									maotaiSession.setAddress(tmp[1]);
+									maotaiSession.setAddressId(tmp[0]);
+									return resultBean;
+								} else {
+									maotaiSession.removeSession(userName);
+									return addrResBean;
+								}
 							}
 						}
 					}
+				} catch (Exception e1) {
+					resultBean.setResultCode(-1);
+					resultBean.setReturnMsg("登录失败" + e1.getMessage());
 				}
-			} catch (Exception e1) {
-				resultBean.setResultCode(-1);
-				resultBean.setReturnMsg("登录失败" + e1.getMessage());
+			}
+		} else {
+			resultBean.setResultCode(0);
+			CookieStore cookieStore = null;
+			maotaiSession.setSession(userName, cookieStore);
+			ReturnResultBean addrResBean = getAddress(auths);
+			if (addrResBean.getResultCode() == 0) {
+				String[] tmp = ((String) addrResBean.getReturnObj()).split("\\|");
+				maotaiSession.setAddress(tmp[1]);
+				maotaiSession.setAddressId(tmp[0]);
+				return resultBean;
+			} else {
+				maotaiSession.removeSession(userName);
+				return addrResBean;
 			}
 		}
 		return resultBean;
@@ -415,9 +434,9 @@ public class MaotaiServiceImpl implements MaotaiService {
 		HttpClient httpClient = HttpClients.custom().setConnectionManager(clientConnectionManager)
 				.setDefaultHeaders(headerList).setDefaultCookieStore(cookieStore).build();
 		MaotaiSkuBean skuBean = (MaotaiSkuBean) parseResult.getReturnObj();
-		String requestUrl = "https://"+getIEmaotaiUrl()+"/yundt-application-trade-core/api/v1/yundt/trade/item/sku/get?shopId="
-				+ skuBean.getShopId() + "&itemId=" + skuBean.getItemId() + "&skuId=" + skuBean.getSkuId()
-				+ "&appCode=1&_t=" + now.getTime();
+		String requestUrl = "https://" + getIEmaotaiUrl()
+				+ "/yundt-application-trade-core/api/v1/yundt/trade/item/sku/get?shopId=" + skuBean.getShopId()
+				+ "&itemId=" + skuBean.getItemId() + "&skuId=" + skuBean.getSkuId() + "&appCode=1&_t=" + now.getTime();
 		URI uri = null;
 		try {
 			uri = new URIBuilder(requestUrl).build();
@@ -448,6 +467,62 @@ public class MaotaiServiceImpl implements MaotaiService {
 		} catch (Exception e) {
 			e.printStackTrace();
 			resultBean.setReturnMsg(resultBean.getReturnMsg() + " " + e.getMessage());
+		}
+		return resultBean;
+	}
+
+	@Override
+	public ReturnResultBean getOrderQCode(String auth) {
+		ReturnResultBean resultBean = new ReturnResultBean();
+		resultBean.setResultCode(-1);
+		resultBean.setReturnMsg("获取二维码失败");
+		Date now = new Date();
+		URI uri = null;
+		try {
+			uri = new URIBuilder("https://i.emaotai.cn/huieryun-identity/api/v1/authant/faceverify/compress"
+					+ "?appCode=1&_t=" + now.getTime() + "&faceverify=scan&mtBizId=6&auth=" + auth).build();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return resultBean;
+		}
+		List<Header> headerList = Lists.newArrayList();
+		headerList.add(new BasicHeader(HttpHeaders.ACCEPT, "application/json,text/javascript,*/*;q=0.01"));
+		headerList.add(new BasicHeader(HttpHeaders.ACCEPT_ENCODING, MaotaiServiceImpl.acceptEncoding));
+		headerList.add(new BasicHeader(HttpHeaders.ACCEPT_LANGUAGE, MaotaiServiceImpl.acceptLanguage));
+		headerList.add(new BasicHeader(HttpHeaders.CONNECTION, MaotaiServiceImpl.connection));
+		headerList.add(new BasicHeader("appId", "1"));
+		headerList.add(new BasicHeader("channelCode", "01"));
+		headerList.add(new BasicHeader("channelId", "01"));
+		headerList.add(new BasicHeader("Flag", "1"));
+		headerList.add(new BasicHeader(HttpHeaders.HOST, "i.emaotai.cn"));
+		headerList.add(new BasicHeader("Origin", "https://www.emaotai.cn"));
+		headerList.add(new BasicHeader("Referer", "https://www.emaotai.cn/smartsales-b2c-web-pc/login"));
+		headerList.add(new BasicHeader("tenantType", "a1"));
+		headerList.add(new BasicHeader("tenantId", "1"));
+		headerList.add(new BasicHeader("Timestamp", now.getTime() + ""));
+		headerList.add(new BasicHeader(HttpHeaders.USER_AGENT, MaotaiServiceImpl.userAgent));
+		headerList.add(new BasicHeader("auth", auth));
+		HttpClient httpClient = HttpClients.custom().setDefaultHeaders(headerList).build();
+		HttpUriRequest httpUriRequest = RequestBuilder.get().setUri(uri).build();
+		HttpClientContext httpClientContext = HttpClientContext.create();
+		try {
+			HttpResponse response = httpClient.execute(httpUriRequest, httpClientContext);
+			if (response.getStatusLine().getStatusCode() == 200) {
+				HttpEntity entity = response.getEntity();
+				if (entity != null) {
+					String content = EntityUtils.toString(entity);
+					JSONObject jsonObject = JSON.parseObject(content);
+					if ((jsonObject.getInteger("resultCode") == 0)
+							&& jsonObject.getString("resultMsg").equals("success")) {
+						resultBean.setResultCode(0);
+						resultBean.setReturnObj(
+								"https://www.cmaotai.com/index.html?faceverify=" + jsonObject.getString("data"));
+					}
+					EntityUtils.consume(entity);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return resultBean;
 	}

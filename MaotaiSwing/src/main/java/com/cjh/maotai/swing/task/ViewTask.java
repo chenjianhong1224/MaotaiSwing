@@ -23,8 +23,8 @@ public class ViewTask implements Runnable {
 				ViewMsgBean msgBean = MainFrame.msgQueue.poll(300, TimeUnit.MILLISECONDS);
 				if (msgBean != null) {
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-					table.setValueAt(sdf.format(msgBean.getTime()), Integer.valueOf(msgBean.getTaskNo()), 1);
-					table.setValueAt(msgBean.getMsg(), Integer.valueOf(msgBean.getTaskNo()), 2);
+					table.setValueAt(sdf.format(msgBean.getTime()), Integer.valueOf(msgBean.getTaskNo()) - 1, 1);
+					table.setValueAt(msgBean.getMsg(), Integer.valueOf(msgBean.getTaskNo()) - 1, 2);
 					table.validate();
 				}
 			} catch (InterruptedException e) {

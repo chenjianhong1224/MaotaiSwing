@@ -12,6 +12,8 @@ import com.cjh.maotai.swing.service.MaotaiService;
 import com.cjh.maotai.swing.service.impl.MaotaiServiceImpl;
 
 public class OrderTask implements Runnable {
+	
+	public static long sleepTime = 1000;
 
 	public OrderTask(Date beginTime, Date endTime, String auth, MaotaiSkuBean skuBean, String num, String purchaseWay,
 			String taskNo) {
@@ -98,7 +100,8 @@ public class OrderTask implements Runnable {
 					MainFrame.msgQueue.put(msg);
 				}
 				double excTime = (double) (System.currentTimeMillis() - startTime) / 1000;
-				Thread.sleep(500);
+				System.out.println(Thread.currentThread().getName() + " excTime=" + excTime);
+				Thread.sleep(sleepTime);
 			}
 		} catch (InterruptedException e1) {
 			msg.setMsg("任务中断..");
